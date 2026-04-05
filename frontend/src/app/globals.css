@@ -1,26 +1,173 @@
 @import "tailwindcss";
 
+@import "tailwindcss";
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Dynamic Variables injected by DynamicStyles component */
+  --background: #fdfdfd;
+  --foreground: var(--primary, #1a1a2e);
+  
+  /* Defaults for Safety */
+  --primary: #0a2540;
+  --accent: #3b82f6;
+  --accent-soft: rgba(10, 37, 64, 0.1);
+  
+  /* Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.3);
+}
+
+.admin-shell,
+.admin-login-shell {
+  --background: #f5f5f5;
+  --foreground: #0a0a0a;
+  --primary: #0a0a0a;
+  --secondary: #6a6a6a;
+  --accent: #a3a3a3;
+  --accent-soft: rgba(10, 10, 10, 0.08);
+  --text: #0a0a0a;
+  --color-background: #f5f5f5;
+  --color-foreground: #0a0a0a;
+  --color-primary: #0a0a0a;
+  --color-secondary: #6a6a6a;
+  --color-accent: #a3a3a3;
+  --color-bg: #f5f5f5;
+  --color-text: #0a0a0a;
+  --glass-bg: rgba(255, 255, 255, 0.88);
+  --glass-border: rgba(10, 10, 10, 0.08);
+  --shadow-premium:
+    0 28px 90px -40px rgba(0, 0, 0, 0.42),
+    0 16px 38px -26px rgba(0, 0, 0, 0.18);
+}
+
+.admin-shell {
+  background:
+    radial-gradient(circle at top left, rgba(0, 0, 0, 0.05), transparent 26%),
+    radial-gradient(circle at bottom right, rgba(0, 0, 0, 0.04), transparent 24%),
+    linear-gradient(180deg, #ffffff 0%, #f3f3f3 100%);
+}
+
+.admin-login-shell {
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.08), transparent 24%),
+    radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.06), transparent 20%),
+    linear-gradient(180deg, #090909 0%, #151515 100%);
+}
+
+.admin-shell ::selection,
+.admin-login-shell ::selection {
+  background: #111111;
+  color: #ffffff;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-primary: var(--primary);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  
+  --font-sans: var(--font-sans-dynamic, var(--font-inter));
+  --font-serif: var(--font-serif-dynamic, var(--font-playfair));
+  
+  --shadow-premium: 0 10px 30px -5px rgba(0, 0, 0, 0.1), 0 4px 12px -3px rgba(0, 0, 0, 0.05);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-base, 16px);
+  @apply antialiased;
+}
+
+h1, h2, h3, h4, h5, h6, .font-serif {
+  font-family: var(--font-serif);
+}
+
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+}
+
+.premium-gradient {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light, #2a2a4a) 100%);
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes ambient-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(18px, -22px, 0) scale(1.06);
+  }
+  100% {
+    transform: translate3d(-14px, 18px, 0) scale(0.97);
+  }
+}
+
+@keyframes ambient-drift-reverse {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-20px, 18px, 0) scale(1.05);
+  }
+  100% {
+    transform: translate3d(16px, -20px, 0) scale(0.98);
+  }
+}
+
+.skeleton-block,
+.skeleton-block-dark {
+  position: relative;
+  overflow: hidden;
+  background-size: 220% 100%;
+  animation: skeleton-shimmer 1.4s linear infinite;
+}
+
+.skeleton-block {
+  background-image: linear-gradient(
+    90deg,
+    rgba(226, 232, 240, 0.9) 0%,
+    rgba(248, 250, 252, 1) 50%,
+    rgba(226, 232, 240, 0.9) 100%
+  );
+}
+
+.skeleton-block-dark {
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.18) 50%,
+    rgba(255, 255, 255, 0.08) 100%
+  );
+}
+
+.ambient-drift {
+  animation: ambient-drift 16s ease-in-out infinite alternate;
+}
+
+.ambient-drift-reverse {
+  animation: ambient-drift-reverse 18s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-block,
+  .skeleton-block-dark,
+  .ambient-drift,
+  .ambient-drift-reverse {
+    animation: none;
+  }
 }
