@@ -1,15 +1,15 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { CheckCircle2, Clock, Calendar, ArrowLeft } from "lucide-react";
+import { CheckCircle2, Clock, Calendar, ArrowLeft, Medal, Shield } from "lucide-react";
+import { Course } from "@/lib/types";
 
 // Server-side Data Fetcher
-async function getCourse(id: string) {
-  const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api'}/public/courses`;
+async function getCourse(slug: string): Promise<Course | null> {
+  const url = `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api"}/public/courses/${slug}`;
   try {
-    const res = await fetch(url, { next: { revalidate: 60 } }); // Cache ISR 60s
+    const res = await fetch(url, { next: { revalidate: 60 } });
     if (!res.ok) return null;
-    const courses = await res.json();
-    return courses.find((c: any) => c._id === id) || null;
+    return res.json();
   } catch (e) {
     return null;
   }
@@ -51,83 +51,124 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
     },
     "offers": {
       "@type": "Offer",
-      "price": course.price || 0,
+      "price": course.fee || 0,
       "priceCurrency": "USD", // Assumed, could be NPR
       "category": "Tuition Service"
     }
   };
 
   return (
-    <div className="bg-slate-50 min-h-screen pt-24 pb-24">
+    <div className="bg-white min-h-screen pb-24">
       {/* Invisible Schema Data payload */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      {/* Hero */}
-      <div className="bg-slate-900 border-t border-slate-800 pt-16 pb-24 mb-16 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/4 pointer-events-none" />
+      {/* 1. PREMIUM HERO SECTION */}
+      <section className="relative pt-48 pb-32 bg-primary overflow-hidden">
+        <div className="absolute inset-0 bg-accent/5 opacity-10 pointer-events-none" />
+        <div className="absolute -top-24 -right-24 w-[600px] h-[600px] bg-accent/10 rounded-full blur-[120px] pointer-events-none" />
         
         <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <Link href="/courses" className="inline-flex items-center gap-2 text-slate-400 hover:text-white mb-8 transition">
-            <ArrowLeft className="w-4 h-4" /> Back to Catalog
+          <Link href="/courses" className="inline-flex items-center gap-3 text-white/40 hover:text-accent mb-12 transition-colors group text-[10px] uppercase font-bold tracking-widest">
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Curriculum Catalog
           </Link>
-          <div className="flex flex-col md:flex-row gap-8 justify-between items-start md:items-end">
-            <div className="max-w-3xl">
-              <div className="inline-block px-3 py-1 bg-blue-500/20 text-blue-300 text-sm font-bold uppercase tracking-wider rounded border border-blue-500/30 mb-6">
-                Premium Program
-              </div>
-              <h1 className="text-4xl md:text-6xl font-extrabold text-white tracking-tight mb-6">
+          
+          <div className="grid lg:grid-cols-12 gap-16 items-end">
+            <div className="lg:col-span-8">
+              <span className="text-accent font-bold uppercase tracking-[0.3em] text-[10px] mb-6 block">
+                 {course.target_group || "Premium Program"}
+              </span>
+              <h1 className="text-5xl md:text-8xl font-serif font-bold text-white tracking-tight leading-[1.1] mb-8">
                 {course.title}
               </h1>
-              <p className="text-xl text-slate-400 font-light max-w-2xl text-balance">
-                Accelerate your career trajectory and deeply master the core fundamentals with our top-rated syllabus.
+              <p className="text-xl text-white/50 font-light max-w-2xl leading-relaxed">
+                 Accelerate your academic trajectory and master core fundamentals with our top-rated, boutique syllabus led by industry pioneers.
               </p>
             </div>
             
-            <div className="bg-white/10 backdrop-blur-md p-8 rounded-3xl border border-white/20 self-stretch md:self-auto flex flex-col justify-center w-full md:w-80 min-w-[300px]">
-              <div className="text-sm font-medium text-slate-300 mb-1">Tuition Fee</div>
-              <div className="text-5xl font-black text-white mb-6 tracking-tight">
-                {course.price ? `$${course.price}` : "Free"}
-              </div>
-              <Link href="/contact" className="w-full text-center px-6 py-4 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-500 hover:shadow-lg hover:shadow-blue-500/50 transition duration-300">
-                Enroll Now
-              </Link>
+            <div className="lg:col-span-4 w-full">
+               <div className="bg-white/5 backdrop-blur-xl p-12 rounded-[40px] border border-white/10 shadow-premium">
+                  <span className="text-[10px] uppercase font-bold text-accent tracking-[0.2em] mb-4 block">Institutional Enrollment Fee</span>
+                  <div className="text-6xl font-serif font-bold text-white mb-10 italic">
+                    {course.fee ? `$${course.fee}` : "Free"}
+                  </div>
+                  <Link href="/contact" className="block w-full py-6 bg-accent text-primary text-center font-bold rounded-2xl uppercase tracking-[0.2em] text-[10px] hover:bg-white transition-all shadow-xl">
+                    Begin Enrollment
+                  </Link>
+               </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Details */}
-      <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-3 gap-16">
+      {/* 2. CURRICULUM DETAILS */}
+      <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-3 gap-24 py-32">
         <div className="lg:col-span-2">
-          <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight mb-8">Course Overview</h2>
-          <div className="prose prose-lg prose-slate max-w-none mb-12">
-            <p className="whitespace-pre-wrap leading-relaxed text-slate-600">
-              {course.description || "Detailed syllabus coming soon. Contact admissions for the curriculum brochure."}
-            </p>
+          <div className="mb-20">
+             <span className="text-accent font-bold uppercase tracking-widest text-[10px] mb-4 block">Course Overview</span>
+             <h2 className="text-4xl font-serif font-bold text-primary tracking-tight mb-10">Detailed Syllabus & Pedagogy</h2>
+             <div className="prose prose-xl prose-primary max-w-none">
+                <p className="whitespace-pre-wrap leading-relaxed text-primary/60 font-light italic text-xl border-l-4 border-accent pl-8 py-2">
+                  {course.description || "Our detailed syllabus is being meticulously refined for the upcoming session. Please contact the academic office for a full brochure."}
+                </p>
+             </div>
           </div>
           
-          <h3 className="text-2xl font-bold text-slate-900 mb-6">What you will learn</h3>
-          <ul className="grid sm:grid-cols-2 gap-4">
-            {['Master the foundational concepts thoroughly', 'Hands-on practical assessments', 'Weekly 1-on-1 mentorship sessions', 'Lifetime access to course materials'].map((bullet, i) => (
-              <li key={i} className="flex items-start gap-3 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-                <CheckCircle2 className="w-6 h-6 text-green-500 shrink-0" />
-                <span className="text-slate-700 font-medium">{bullet}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="bg-[#fcfcfc] p-16 rounded-[Recp-48] border border-primary/5 shadow-premium">
+             <h3 className="text-2xl font-serif font-bold text-primary mb-12 flex items-center gap-4">
+                <Medal className="w-8 h-8 text-accent"/> Academic Learning Outcomes
+             </h3>
+             <ul className="grid sm:grid-cols-1 gap-6">
+               {[
+                 'Advanced mastery of core conceptual frameworks through rigorous testing.',
+                 'Exclusive hands-on practical assessments designed for industrial application.',
+                 'Personalized weekly 1-on-1 mentorship with distinguished faculty members.',
+                 'Permanent institutional access to premium digital resources and alumni network.'
+               ].map((bullet, i) => (
+                 <li key={i} className="flex items-start gap-6 group">
+                   <div className="w-8 h-8 rounded-full bg-primary/5 flex items-center justify-center shrink-0 group-hover:bg-accent transition-colors">
+                      <CheckCircle2 className="w-4 h-4 text-accent group-hover:text-primary transition-colors" />
+                   </div>
+                   <span className="text-primary/70 font-light text-lg leading-relaxed">{bullet}</span>
+                 </li>
+               ))}
+             </ul>
+          </div>
         </div>
 
-        <div className="space-y-6">
-          <h3 className="text-xl font-bold text-slate-900 mb-4">Quick Facts</h3>
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600"><Clock /></div>
-              <div><div className="text-sm text-slate-500 font-semibold">Duration</div><div className="font-bold text-slate-900">{course.duration || "Self-paced"}</div></div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600"><Calendar /></div>
-              <div><div className="text-sm text-slate-500 font-semibold">Next Batch</div><div className="font-bold text-slate-900">Enrolling constantly</div></div>
-            </div>
+        <div className="space-y-12">
+          <div>
+             <h3 className="text-[10px] uppercase font-bold text-primary/30 tracking-[0.3em] mb-10">Institutional Facts</h3>
+             <div className="bg-white p-10 rounded-[40px] border border-primary/5 shadow-premium space-y-10">
+               <div className="flex items-center gap-6">
+                 <div className="w-16 h-16 rounded-2xl bg-primary/5 flex items-center justify-center text-accent"><Clock className="w-6 h-6"/></div>
+                 <div>
+                    <div className="text-[10px] text-primary/40 uppercase font-bold tracking-widest mb-1">Duration</div>
+                    <div className="font-serif font-bold text-xl text-primary">{course.duration || "Accelerated Pace"}</div>
+                 </div>
+               </div>
+               <div className="flex items-center gap-6">
+                 <div className="w-16 h-16 rounded-2xl bg-primary/5 flex items-center justify-center text-accent"><Calendar className="w-6 h-6"/></div>
+                 <div>
+                    <div className="text-[10px] text-primary/40 uppercase font-bold tracking-widest mb-1">Admissions State</div>
+                    <div className="font-serif font-bold text-xl text-primary">Open Enrollment</div>
+                 </div>
+               </div>
+               <div className="flex items-center gap-6">
+                 <div className="w-16 h-16 rounded-2xl bg-primary/5 flex items-center justify-center text-accent"><Shield className="w-6 h-6"/></div>
+                 <div>
+                    <div className="text-[10px] text-primary/40 uppercase font-bold tracking-widest mb-1">Certification</div>
+                    <div className="font-serif font-bold text-xl text-primary">Academy Verified</div>
+                 </div>
+               </div>
+             </div>
+          </div>
+
+          <div className="p-10 bg-accent rounded-[40px] text-primary shadow-premium">
+             <h4 className="font-serif font-bold text-xl mb-4">Request Brochure</h4>
+             <p className="text-sm font-medium mb-8 leading-relaxed">Get the complete curriculum breakdown and schedule delivered to your inbox.</p>
+             <Link href="/contact" className="w-full py-4 bg-primary text-white text-center font-bold text-[10px] uppercase tracking-widest rounded-xl hover:bg-primary/90 transition-colors block">
+                Inquire Now
+             </Link>
           </div>
         </div>
       </div>
