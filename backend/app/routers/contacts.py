@@ -16,10 +16,21 @@ public_router = APIRouter()
 @limiter.limit("3/minute")
 async def submit_contact(request: Request, data: ContactCreate):
     data.name = bleach.clean(data.name)
-    data.email = bleach.clean(data.email)
+    if data.email:
+        data.email = bleach.clean(data.email)
     if data.phone:
         data.phone = bleach.clean(data.phone)
     data.message = bleach.clean(data.message)
+    data.extra_fields = [
+        field.model_copy(
+            update={
+                "field_id": bleach.clean(field.field_id),
+                "label": bleach.clean(field.label),
+                "value": bleach.clean(field.value),
+            }
+        )
+        for field in data.extra_fields
+    ]
 
     contact = ContactSubmission(**data.model_dump())
     await contact.insert()

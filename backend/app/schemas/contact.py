@@ -1,7 +1,13 @@
-from pydantic import BaseModel, EmailStr
-from typing import Optional
+from pydantic import BaseModel, EmailStr, Field
+from typing import List, Optional
 from datetime import datetime
 from beanie import PydanticObjectId
+
+
+class ContactExtraFieldPayload(BaseModel):
+    field_id: str
+    label: str
+    value: str
 
 
 class ContactCreate(BaseModel):
@@ -9,6 +15,7 @@ class ContactCreate(BaseModel):
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
     message: str
+    extra_fields: List[ContactExtraFieldPayload] = Field(default_factory=list)
 
 
 class ContactResponse(BaseModel):
@@ -17,6 +24,7 @@ class ContactResponse(BaseModel):
     email: Optional[str] = None
     phone: Optional[str] = None
     message: str
+    extra_fields: List[ContactExtraFieldPayload] = Field(default_factory=list)
     is_read: bool
     created_at: Optional[datetime] = None
 
