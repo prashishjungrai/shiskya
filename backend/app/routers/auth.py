@@ -9,9 +9,9 @@ router = APIRouter()
 
 @router.post("/login")
 @limiter.limit("5/minute")
-async def login(req: Request, request: LoginRequest, response: Response):
-    admin = await Admin.find_one(Admin.username == request.username)
-    if not admin or not verify_password(request.password, admin.hashed_password):
+async def login(request: Request, body: LoginRequest, response: Response):
+    admin = await Admin.find_one(Admin.username == body.username)
+    if not admin or not verify_password(body.password, admin.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password",
