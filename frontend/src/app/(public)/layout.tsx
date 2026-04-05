@@ -1,18 +1,17 @@
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import ThemeProvider from "@/components/ThemeProvider";
+import PublicSiteChrome from "@/components/public/PublicSiteChrome";
+import { getPublicSettings } from "@/lib/get-public-settings";
 
-export default function PublicLayout({
+export default async function PublicLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const settings = await getPublicSettings();
+
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
-      <Navbar />
-      <main className="flex-1 w-full relative">
-        {children}
-      </main>
-      <Footer />
-    </div>
+    <ThemeProvider initialSettings={settings}>
+      <PublicSiteChrome>{children}</PublicSiteChrome>
+    </ThemeProvider>
   );
 }
