@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { ExternalLink } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
+import { resolveMediaUrl } from "@/lib/media";
 
 export default function Footer() {
   const settings = useTheme();
+  const logoUrl = resolveMediaUrl(settings?.logo_url);
 
   const socialLinks = [
     { label: "Facebook", href: settings?.social_links?.facebook },
@@ -32,12 +35,14 @@ export default function Footer() {
         <div className="grid gap-10 border-b border-white/8 pb-10 lg:grid-cols-[1.25fr_0.7fr_0.8fr_1fr]">
           <div className="space-y-6">
             <Link href="/" className="inline-flex items-center gap-3 group">
-              {settings?.logo_url ? (
-                <div className="h-10 w-10 overflow-hidden rounded-2xl border border-white/12 bg-white p-0.5 shadow-lg transition-transform duration-300 group-hover:scale-105">
-                  <img
-                    src={settings.logo_url}
-                    alt={settings.site_name}
-                    className="h-full w-full rounded-[14px] object-cover"
+              {logoUrl ? (
+                <div className="relative h-10 w-10 overflow-hidden rounded-2xl border border-white/12 bg-white p-0.5 shadow-lg transition-transform duration-300 group-hover:scale-105">
+                  <Image
+                    src={logoUrl}
+                    alt={settings?.site_name || "Bidhya Kendra"}
+                    fill
+                    sizes="40px"
+                    className="rounded-[14px] object-cover"
                   />
                 </div>
               ) : (
@@ -48,14 +53,14 @@ export default function Footer() {
                       "linear-gradient(135deg, var(--color-primary, #0f172a) 0%, var(--color-accent, #38bdf8) 100%)",
                   }}
                 >
-                  {settings?.site_name?.charAt(0) || "T"}
+                  {settings?.site_name?.charAt(0) || "B"}
                 </div>
               )}
               <span
                 className="text-2xl font-bold tracking-tight text-white"
                 style={{ fontFamily: "var(--font-serif, Playfair Display)" }}
               >
-                {settings?.site_name || "Tuition Institute"}
+                {settings?.site_name || "Bidhya Kendra"}
               </span>
             </Link>
 
@@ -88,23 +93,28 @@ export default function Footer() {
             <h4 className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/44">
               Explore
             </h4>
-            <ul className="mt-5 space-y-3.5 text-sm">
-              {[
-                { label: "Courses", href: "/courses" },
-                { label: "Instructors", href: "/teachers" },
-                { label: "About", href: "/about" },
-                { label: "Contact", href: "/contact" },
-              ].map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-white/68 transition-colors hover:text-white"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <nav aria-label="Footer">
+              <ul className="mt-5 space-y-3.5 text-sm">
+                {[
+                  { label: "Courses", href: "/courses" },
+                  { label: "Instructors", href: "/teachers" },
+                  { label: "Resources", href: "/resources" },
+                  { label: "Testimonials", href: "/testimonials" },
+                  { label: "FAQ", href: "/faq" },
+                  { label: "About", href: "/about" },
+                  { label: "Contact", href: "/contact" },
+                ].map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-white/68 transition-colors hover:text-white"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
           </div>
 
           <div>
@@ -144,6 +154,7 @@ export default function Footer() {
                         href={item.href}
                         target="_blank"
                         rel="noreferrer"
+                        aria-label={`${item.label} (opens in a new tab)`}
                         className="inline-flex items-center gap-2 text-white/68 transition-colors hover:text-white"
                       >
                         <ExternalLink className="h-4 w-4 text-white/42" />
@@ -166,6 +177,7 @@ export default function Footer() {
               </p>
               <Link
                 href="/admin/login"
+                rel="nofollow"
                 className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/12 px-4 py-2.5 text-xs font-bold uppercase tracking-[0.18em] text-white/80 transition-all hover:bg-white/[0.08] hover:text-white"
               >
                 Institutional Portal
@@ -177,7 +189,7 @@ export default function Footer() {
         <div className="flex flex-col gap-3 pt-6 md:flex-row md:items-center md:justify-between">
           <p className="text-xs tracking-[0.12em] text-white/46">
             {settings?.footer_content?.copyright ||
-              `© ${new Date().getFullYear()} ${settings?.site_name || "Tuition Institute"}. All rights reserved.`}
+              `© ${new Date().getFullYear()} ${settings?.site_name || "Bidhya Kendra"}. All rights reserved.`}
           </p>
           <p className="text-xs text-white/38">
             Designed for clarity, faster decisions, and a stronger admissions flow.

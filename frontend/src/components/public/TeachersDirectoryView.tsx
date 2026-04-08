@@ -1,8 +1,9 @@
 "use client";
 
-import { startTransition, useDeferredValue, useEffect, useMemo, useState } from "react";
+import { startTransition, useDeferredValue, useMemo, useState } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowRight,
   BriefcaseBusiness,
@@ -11,12 +12,14 @@ import {
   Users,
   X,
 } from "lucide-react";
+import Breadcrumbs, { type BreadcrumbItem } from "@/components/seo/Breadcrumbs";
 import { resolveMediaUrl } from "@/lib/media";
 import {
   getTeachersTextStyle,
   normalizeTeachersPage,
   TEACHERS_ICON_MAP,
 } from "@/lib/teachers-page";
+import { getTeacherPath } from "@/lib/teachers";
 import type { Teacher, TeachersPageSettings } from "@/lib/types";
 
 const containerVariants = {
@@ -37,11 +40,13 @@ export default function TeachersDirectoryView({
   teachers,
   settings,
   siteName,
+  breadcrumbs = [],
   interactive = true,
 }: {
   teachers: Teacher[];
   settings?: TeachersPageSettings;
   siteName?: string;
+  breadcrumbs?: BreadcrumbItem[];
   interactive?: boolean;
 }) {
   const teachersPage = useMemo(() => normalizeTeachersPage(settings, siteName), [settings, siteName]);
@@ -66,16 +71,13 @@ export default function TeachersDirectoryView({
       ].slice(0, 8),
     [allSubjectsLabel, teachers],
   );
-
-  useEffect(() => {
-    if (!subjectOptions.includes(activeSubject)) {
-      setActiveSubject(allSubjectsLabel);
-    }
-  }, [activeSubject, allSubjectsLabel, subjectOptions]);
+  const safeActiveSubject = subjectOptions.includes(activeSubject)
+    ? activeSubject
+    : allSubjectsLabel;
 
   const normalizedQuery = deferredQuery.trim().toLowerCase();
   const normalizedSubject =
-    activeSubject === allSubjectsLabel ? null : activeSubject.toLowerCase();
+    safeActiveSubject === allSubjectsLabel ? null : safeActiveSubject.toLowerCase();
 
   const filteredTeachers = teachers.filter((teacher) => {
     const matchesSubject = normalizedSubject
@@ -128,6 +130,9 @@ export default function TeachersDirectoryView({
           <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)] bg-[size:88px_88px] opacity-10" />
 
           <div className="relative z-10 mx-auto max-w-7xl">
+            {breadcrumbs.length > 0 ? (
+              <Breadcrumbs items={breadcrumbs} variant="light" className="mb-6" />
+            ) : null}
             <motion.div
               initial={interactive ? { opacity: 0, y: 22 } : false}
               animate={{ opacity: 1, y: 0 }}
@@ -273,7 +278,7 @@ export default function TeachersDirectoryView({
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex flex-wrap gap-2">
                 {subjectOptions.map((subject) => {
-                  const isActive = activeSubject === subject;
+                  const isActive = safeActiveSubject === subject;
                   return (
                     <button
                       key={subject}
@@ -361,12 +366,14 @@ export default function TeachersDirectoryView({
                   }}
                 >
                   <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-                    <div className="overflow-hidden rounded-[28px] bg-slate-100">
+                    <div className="relative min-h-[24rem] overflow-hidden rounded-[28px] bg-slate-100">
                       {resolveMediaUrl(spotlightTeacher.photo_url) ? (
-                        <img
+                        <Image
                           src={resolveMediaUrl(spotlightTeacher.photo_url)}
-                          alt={spotlightTeacher.name}
-                          className="h-full min-h-[24rem] w-full object-cover"
+                          alt={`${spotlightTeacher.name} teacher profile`}
+                          fill
+                          sizes="(min-width: 1024px) 32vw, 100vw"
+                          className="object-cover"
                         />
                       ) : (
                         <div
@@ -474,6 +481,14 @@ export default function TeachersDirectoryView({
                             </p>
                           </div>
                         ))}
+                      </div>
+                      <div className="mt-6">
+                        <Link
+                          href={getTeacherPath(spotlightTeacher)}
+                          className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900 transition-colors hover:text-[color:var(--color-primary)]"
+                        >
+                          View full teacher profile <ArrowRight className="h-4 w-4" />
+                        </Link>
                       </div>
                     </div>
                   </div>
@@ -680,6 +695,7 @@ function TeacherCard({
   roster: TeachersPageSettings["roster"];
 }) {
   const photoUrl = resolveMediaUrl(teacher.photo_url);
+  const teacherPath = getTeacherPath(teacher);
 
   return (
     <div
@@ -689,12 +705,14 @@ function TeacherCard({
         borderColor: roster.style.panel_border_color,
       }}
     >
-      <div className="overflow-hidden rounded-[24px] bg-slate-100">
+      <div className="relative h-56 overflow-hidden rounded-[24px] bg-slate-100">
         {photoUrl ? (
-          <img
+          <Image
             src={photoUrl}
-            alt={teacher.name}
-            className="h-56 w-full object-cover transition-transform duration-700 group-hover:scale-105"
+            alt={`${teacher.name} teacher profile`}
+            fill
+            sizes="(min-width: 768px) 33vw, 100vw"
+            className="object-cover transition-transform duration-700 group-hover:scale-105"
           />
         ) : (
           <div
@@ -721,7 +739,9 @@ function TeacherCard({
           className="mt-3 tracking-[-0.03em]"
           style={getTeachersTextStyle(roster.style.name)}
         >
-          {teacher.name}
+          <Link href={teacherPath} className="transition-colors hover:text-[color:var(--color-primary)]">
+            {teacher.name}
+          </Link>
         </h3>
         {teacher.qualification ? (
           <p className="mt-3" style={getTeachersTextStyle(roster.style.qualification)}>
@@ -731,6 +751,12 @@ function TeacherCard({
         <p className="mt-4 line-clamp-4 leading-relaxed" style={getTeachersTextStyle(roster.style.body)}>
           {teacher.bio || roster.fallback_bio}
         </p>
+        <Link
+          href={teacherPath}
+          className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-slate-900 transition-colors hover:text-[color:var(--color-primary)]"
+        >
+          Explore faculty profile <ArrowRight className="h-4 w-4" />
+        </Link>
       </div>
     </div>
   );

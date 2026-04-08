@@ -1,37 +1,64 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useTheme } from "@/components/ThemeProvider";
-import api from "@/lib/api";
 import TeachersDirectoryView from "@/components/public/TeachersDirectoryView";
-import { TeachersPageSkeleton } from "@/components/public/PublicSkeletons";
-import { Teacher } from "@/lib/types";
+import JsonLd from "@/components/seo/JsonLd";
+import { getPublicSettings, getPublicTeachers } from "@/lib/public-api";
+import { buildMetadata } from "@/lib/seo";
+import { buildBreadcrumbSchema, buildWebPageSchema } from "@/lib/schema";
+import { getSiteName } from "@/lib/site";
 
-export default function TeachersDirectory() {
-  const settings = useTheme();
-  const teachersVisibility = settings?.teachers_page?.visibility;
-  const [teachers, setTeachers] = useState<Teacher[]>([]);
-  const [loading, setLoading] = useState(true);
+const breadcrumbItems = [
+  { label: "Home", href: "/" },
+  { label: "Teachers" },
+];
 
-  useEffect(() => {
-    api
-      .get("/public/teachers")
-      .then((teachersResponse) => {
-        setTeachers(teachersResponse.data.filter((teacher: Teacher) => teacher.is_active));
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+const breadcrumbSchemaItems = [
+  { name: "Home", path: "/" },
+  { name: "Teachers", path: "/teachers" },
+];
 
-  if (loading || !settings) {
-    return <TeachersPageSkeleton visibility={teachersVisibility} />;
-  }
+const description =
+  "Meet the Bidhya Kendra teaching team for +2 and engineering tuition, and review the faculty members guiding student progress.";
+
+export async function generateMetadata() {
+  const settings = await getPublicSettings();
+  const siteName = getSiteName(settings);
+
+  return buildMetadata({
+    title: "Teachers",
+    description,
+    path: "/teachers",
+    keywords: [
+      "tuition teachers in Nepal",
+      "experienced faculty for +2",
+      "engineering tuition teachers",
+    ],
+    siteName,
+  });
+}
+
+export default async function TeachersDirectory() {
+  const [settings, teachers] = await Promise.all([
+    getPublicSettings(),
+    getPublicTeachers(),
+  ]);
 
   return (
-    <TeachersDirectoryView
-      teachers={teachers}
-      settings={settings.teachers_page}
-      siteName={settings.site_name}
-    />
+    <>
+      <JsonLd
+        data={[
+          buildWebPageSchema({
+            title: "Teachers",
+            description,
+            path: "/teachers",
+          }),
+          buildBreadcrumbSchema(breadcrumbSchemaItems),
+        ]}
+      />
+      <TeachersDirectoryView
+        teachers={teachers}
+        settings={settings?.teachers_page}
+        siteName={settings?.site_name}
+        breadcrumbs={breadcrumbItems}
+      />
+    </>
   );
 }

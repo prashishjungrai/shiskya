@@ -1,6 +1,41 @@
 import type { NextConfig } from "next";
+import type { RemotePattern } from "next/dist/shared/lib/image-config";
+
+function toRemotePattern(value?: string): RemotePattern | null {
+  if (!value) return null;
+
+  try {
+    const url = new URL(value);
+    const protocol = url.protocol.replace(":", "") as RemotePattern["protocol"];
+
+    return {
+      protocol,
+      hostname: url.hostname,
+      port: url.port,
+      pathname: "/**",
+    };
+  } catch {
+    return null;
+  }
+}
+
+const remotePatterns = [
+  {
+    protocol: "https",
+    hostname: "res.cloudinary.com",
+    pathname: "/**",
+  },
+  toRemotePattern(process.env.NEXT_PUBLIC_API_URL),
+  toRemotePattern(process.env.NEXT_PUBLIC_FRONTEND_URL),
+].filter(Boolean) as RemotePattern[];
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    root: process.cwd(),
+  },
+  images: {
+    remotePatterns,
+  },
   async headers() {
     return [
       {

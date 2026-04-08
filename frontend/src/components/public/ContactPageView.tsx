@@ -3,6 +3,7 @@
 import { CSSProperties, FormEvent, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Clock, Mail, MapPin, Phone, Send } from "lucide-react";
+import Breadcrumbs, { type BreadcrumbItem } from "@/components/seo/Breadcrumbs";
 import { SiteSettings } from "@/lib/types";
 
 export type ContactFormState = {
@@ -19,6 +20,7 @@ export type ContactFormState = {
 
 type ContactPageViewProps = {
   settings: SiteSettings | null;
+  breadcrumbs?: BreadcrumbItem[];
   interactive?: boolean;
   onSubmitRequest?: (formData: ContactFormState) => Promise<void>;
 };
@@ -116,6 +118,7 @@ function pickFontFamily(value: "serif" | "sans" | undefined) {
 
 export default function ContactPageView({
   settings,
+  breadcrumbs = [],
   interactive = true,
   onSubmitRequest,
 }: ContactPageViewProps) {
@@ -129,33 +132,34 @@ export default function ContactPageView({
 
   const contactInfo = settings?.contact_info;
   const contactPage = settings?.contact_page;
-  const leftPanel = {
-    ...fallbackContactPage.left_panel,
-    ...(contactPage?.left_panel || {}),
-    visible_items: {
-      ...fallbackContactPage.left_panel.visible_items,
-      ...(contactPage?.left_panel?.visible_items || {}),
-    },
-  };
-  const formPanel = {
-    ...fallbackContactPage.form_panel,
-    ...(contactPage?.form_panel || {}),
-    field_visibility: {
-      ...fallbackContactPage.form_panel.field_visibility,
-      ...(contactPage?.form_panel?.field_visibility || {}),
-    },
-    custom_fields: Array.isArray(contactPage?.form_panel?.custom_fields)
-      ? contactPage.form_panel.custom_fields
-      : fallbackContactPage.form_panel.custom_fields,
-  };
-  const formStyles = {
-    ...fallbackContactPage.form_styles,
-    ...(contactPage?.form_styles || {}),
-  };
-  const mapSection = {
-    ...fallbackContactPage.map_section,
-    ...(contactPage?.map_section || {}),
-  };
+  const formPanel = useMemo(
+    () => ({
+      ...fallbackContactPage.form_panel,
+      ...(contactPage?.form_panel || {}),
+      field_visibility: {
+        ...fallbackContactPage.form_panel.field_visibility,
+        ...(contactPage?.form_panel?.field_visibility || {}),
+      },
+      custom_fields: Array.isArray(contactPage?.form_panel?.custom_fields)
+        ? contactPage.form_panel.custom_fields
+        : fallbackContactPage.form_panel.custom_fields,
+    }),
+    [contactPage?.form_panel],
+  );
+  const formStyles = useMemo(
+    () => ({
+      ...fallbackContactPage.form_styles,
+      ...(contactPage?.form_styles || {}),
+    }),
+    [contactPage?.form_styles],
+  );
+  const mapSection = useMemo(
+    () => ({
+      ...fallbackContactPage.map_section,
+      ...(contactPage?.map_section || {}),
+    }),
+    [contactPage?.map_section],
+  );
 
   const renderableFields = useMemo<RenderableField[]>(() => {
     const baseFields: RenderableField[] = [
@@ -311,7 +315,7 @@ export default function ContactPageView({
 
       <div className="relative z-10 mx-auto flex min-h-screen max-w-7xl items-center px-6 pb-16 pt-32">
         <div className="grid w-full overflow-hidden rounded-[3rem] border border-white/10 bg-white/[0.02] shadow-[0_30px_100px_-20px_rgba(0,0,0,0.5)] lg:grid-cols-12">
-          <ContactInfoPanel settings={settings} />
+          <ContactInfoPanel settings={settings} breadcrumbs={breadcrumbs} />
 
           <div
             id="contact-form-panel"
@@ -458,7 +462,13 @@ export default function ContactPageView({
   );
 }
 
-export function ContactInfoPanel({ settings }: { settings: SiteSettings | null }) {
+export function ContactInfoPanel({
+  settings,
+  breadcrumbs = [],
+}: {
+  settings: SiteSettings | null;
+  breadcrumbs?: BreadcrumbItem[];
+}) {
   const contactInfo = settings?.contact_info;
   const leftPanel = {
     ...fallbackContactPage.left_panel,
@@ -483,6 +493,9 @@ export function ContactInfoPanel({ settings }: { settings: SiteSettings | null }
         transition={{ duration: 0.8 }}
         className="relative z-10"
       >
+        {breadcrumbs.length > 0 ? (
+          <Breadcrumbs items={breadcrumbs} variant="light" className="mb-6" />
+        ) : null}
         <span className="mb-6 inline-block rounded-full border border-white/20 bg-white/5 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-white">
           {leftPanel.badge_text}
         </span>
@@ -524,7 +537,7 @@ export function ContactInfoPanel({ settings }: { settings: SiteSettings | null }
             <ContactInfoItem
               icon={Mail}
               title={leftPanel.email_title}
-              value={contactInfo?.email || "admissions@tuitionhub.edu"}
+              value={contactInfo?.email || "contact@bidhyakendra.com"}
               accent
             />
           ) : null}

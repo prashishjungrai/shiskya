@@ -1,40 +1,84 @@
-import { MetadataRoute } from 'next';
+import { MetadataRoute } from "next";
+import { getPublicCourses, getPublicTeachers } from "@/lib/public-api";
+import { RESOURCE_ARTICLES } from "@/lib/resources";
+import { getSiteUrl } from "@/lib/site";
+import { getTeacherPath } from "@/lib/teachers";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://www.tuitionhubnepal.com';
-  
-  // 1. Static Core Routes
-  const routes = ['', '/about', '/contact', '/courses', '/teachers'].map((route) => ({
-    url: `${baseUrl}${route}`,
-    lastModified: new Date().toISOString(),
-    changeFrequency: 'weekly' as any,
-    priority: route === '' ? 1.0 : 0.8,
+  const baseUrl = getSiteUrl();
+  const now = new Date();
+  const staticRoutes: MetadataRoute.Sitemap = [
+    {
+      url: `${baseUrl}/`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 1,
+    },
+    {
+      url: `${baseUrl}/about`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/courses`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/teachers`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/contact`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/faq`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.75,
+    },
+    {
+      url: `${baseUrl}/resources`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/testimonials`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.75,
+    },
+  ];
+
+  const [courses, teachers] = await Promise.all([getPublicCourses(), getPublicTeachers()]);
+  const courseRoutes: MetadataRoute.Sitemap = courses.map((course) => ({
+    url: `${baseUrl}/courses/${course.slug}`,
+    lastModified: course.updated_at || course.created_at || now,
+    changeFrequency: "weekly",
+    priority: 0.85,
   }));
 
-  // 2. Dynamic Course Routes via Backend API Fetch
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api'}/public/courses`, {
-      method: "GET",
-      // Using Next.js aggressive caching for the sitemap fetch (revalidates every hour)
-      next: { revalidate: 3600 } 
-    });
-    
-    if (res.ok) {
-      const courses = await res.json();
-      const courseUrls = courses
-        .filter((c: any) => c.is_active)
-        .map((c: any) => ({
-          url: `${baseUrl}/courses/${c.slug}`,
-          lastModified: new Date().toISOString(),
-          changeFrequency: 'weekly' as any,
-          priority: 0.9,
-        }));
-      
-      return [...routes, ...courseUrls];
-    }
-  } catch (error) {
-    console.error("Sitemap generation error:", error);
-  }
+  const teacherRoutes: MetadataRoute.Sitemap = teachers.map((teacher) => ({
+    url: `${baseUrl}${getTeacherPath(teacher)}`,
+    lastModified: teacher.created_at || now,
+    changeFrequency: "monthly",
+    priority: 0.72,
+  }));
 
-  return routes;
+  const resourceRoutes: MetadataRoute.Sitemap = RESOURCE_ARTICLES.map((article) => ({
+    url: `${baseUrl}/resources/${article.slug}`,
+    lastModified: now,
+    changeFrequency: "monthly",
+    priority: 0.7,
+  }));
+
+  return [...staticRoutes, ...courseRoutes, ...teacherRoutes, ...resourceRoutes];
 }

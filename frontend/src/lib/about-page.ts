@@ -357,7 +357,7 @@ export function normalizeAboutPage(
     : [];
 
   if (!normalized.hero.quote_title.trim()) {
-    normalized.hero.quote_title = siteName || "Tuition Institute";
+    normalized.hero.quote_title = siteName || "Bidhya Kendra";
   }
   if (!normalized.hero.quote_body.trim()) {
     normalized.hero.quote_body = fallbackNarrative;

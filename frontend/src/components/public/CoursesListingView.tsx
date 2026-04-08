@@ -3,6 +3,8 @@
 import { startTransition, useDeferredValue, useState } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import {
   ArrowRight,
   BookOpen,
@@ -14,6 +16,8 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
+import Breadcrumbs, { type BreadcrumbItem } from "@/components/seo/Breadcrumbs";
+import { resolveMediaUrl } from "@/lib/media";
 import { Course } from "@/lib/types";
 
 const containerVariants = {
@@ -32,19 +36,27 @@ const itemVariants = {
 
 export default function CoursesListingView({
   courses,
+  breadcrumbs = [],
   interactive = true,
 }: {
   courses: Course[];
+  breadcrumbs?: BreadcrumbItem[];
   interactive?: boolean;
 }) {
   const { scrollY } = useScroll();
   const accentY = useTransform(scrollY, [0, 900], [0, interactive ? 64 : 0]);
-  const [query, setQuery] = useState("");
-  const [activeTrack, setActiveTrack] = useState("All Programs");
+  const searchParams = useSearchParams();
+  const allProgramsLabel = "All Programs";
+  const urlQuery = searchParams.get("query")?.trim() || "";
+  const urlTrack = searchParams.get("track")?.trim() || "";
+  const [queryOverride, setQueryOverride] = useState<string | null>(null);
+  const [trackOverride, setTrackOverride] = useState<string | null>(null);
+  const query = queryOverride ?? urlQuery;
+  const activeTrack = trackOverride ?? (urlTrack || allProgramsLabel);
   const deferredQuery = useDeferredValue(query);
 
   const trackOptions = [
-    "All Programs",
+    allProgramsLabel,
     ...Array.from(
       new Set(
         courses
@@ -53,10 +65,13 @@ export default function CoursesListingView({
       ),
     ),
   ].slice(0, 8);
+  const safeActiveTrack = trackOptions.includes(activeTrack)
+    ? activeTrack
+    : allProgramsLabel;
 
   const normalizedQuery = deferredQuery.trim().toLowerCase();
   const normalizedTrack =
-    activeTrack === "All Programs" ? null : activeTrack.trim().toLowerCase();
+    safeActiveTrack === allProgramsLabel ? null : safeActiveTrack.trim().toLowerCase();
 
   const filteredCourses = courses.filter((course) => {
     const matchesTrack = normalizedTrack
@@ -80,6 +95,7 @@ export default function CoursesListingView({
   const featuredCourse = filteredCourses[0] || courses[0] || null;
   const secondaryCourses = filteredCourses.slice(featuredCourse ? 1 : 0);
   const selfPacedCount = courses.filter((course) => !course.duration).length;
+  const featuredCourseImage = resolveMediaUrl(featuredCourse?.image_url);
 
   return (
     <div
@@ -102,6 +118,9 @@ export default function CoursesListingView({
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)] bg-[size:88px_88px] opacity-10" />
 
         <div className="relative z-10 mx-auto max-w-7xl">
+          {breadcrumbs.length > 0 ? (
+            <Breadcrumbs items={breadcrumbs} variant="light" className="mb-6" />
+          ) : null}
           <motion.div
             initial={interactive ? { opacity: 0, y: 22 } : false}
             animate={{ opacity: 1, y: 0 }}
@@ -136,7 +155,7 @@ export default function CoursesListingView({
                   </p>
                   <input
                     value={query}
-                    onChange={(event) => setQuery(event.target.value)}
+                    onChange={(event) => setQueryOverride(event.target.value)}
                     placeholder="Search by title, duration, skill lane, or syllabus"
                     className="mt-1 w-full bg-transparent text-sm font-medium text-slate-900 outline-none placeholder:text-slate-400"
                   />
@@ -192,11 +211,11 @@ export default function CoursesListingView({
                   type="button"
                   onClick={() => {
                     startTransition(() => {
-                      setActiveTrack(track);
+                      setTrackOverride(track);
                     });
                   }}
                   className={`rounded-full px-4 py-2.5 text-sm font-semibold transition-all ${
-                    activeTrack === track
+                    safeActiveTrack === track
                       ? "bg-slate-950 text-white shadow-lg"
                       : "border border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
                   }`}
@@ -213,7 +232,7 @@ export default function CoursesListingView({
               {query.trim() ? (
                 <button
                   type="button"
-                  onClick={() => setQuery("")}
+                  onClick={() => setQueryOverride("")}
                   className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 font-medium text-slate-600 hover:bg-slate-50"
                 >
                   Clear search <X className="h-4 w-4" />
@@ -287,12 +306,15 @@ export default function CoursesListingView({
                     </div>
                   </div>
 
-                  <div className="overflow-hidden rounded-[28px] bg-slate-100">
-                    {featuredCourse.image_url ? (
-                      <img
-                        src={featuredCourse.image_url}
-                        alt={featuredCourse.title}
-                        className="h-full min-h-[20rem] w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  <div className="relative min-h-[20rem] overflow-hidden rounded-[28px] bg-slate-100">
+                    {featuredCourseImage ? (
+                      <Image
+                        src={featuredCourseImage}
+                        alt={`${featuredCourse.title} course image`}
+                        fill
+                        priority
+                        sizes="(min-width: 1280px) 30vw, 100vw"
+                        className="object-cover transition-transform duration-700 group-hover:scale-105"
                       />
                     ) : (
                       <div
@@ -404,17 +426,21 @@ export default function CoursesListingView({
 }
 
 function CourseCard({ course }: { course: Course }) {
+  const courseImage = resolveMediaUrl(course.image_url);
+
   return (
     <Link
       href={`/courses/${course.slug}`}
       className="group block h-full overflow-hidden rounded-[30px] border border-slate-200 bg-white p-4 shadow-[0_24px_70px_-58px_rgba(15,23,42,0.35)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_30px_80px_-54px_rgba(15,23,42,0.42)]"
     >
-      <div className="overflow-hidden rounded-[24px] bg-slate-100">
-        {course.image_url ? (
-          <img
-            src={course.image_url}
-            alt={course.title}
-            className="h-48 w-full object-cover transition-transform duration-700 group-hover:scale-105"
+      <div className="relative h-48 overflow-hidden rounded-[24px] bg-slate-100">
+        {courseImage ? (
+          <Image
+            src={courseImage}
+            alt={`${course.title} course image`}
+            fill
+            sizes="(min-width: 640px) 50vw, 100vw"
+            className="object-cover transition-transform duration-700 group-hover:scale-105"
           />
         ) : (
           <div

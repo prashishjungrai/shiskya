@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
-import { Menu, X, BookOpen, Users, Phone, Info } from "lucide-react";
+import { Menu, X, BookOpen, Users, Phone, Info, FileText } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
+import { resolveMediaUrl } from "@/lib/media";
 
 export default function Navbar({
   pathnameOverride,
@@ -15,10 +17,12 @@ export default function Navbar({
   embedded?: boolean;
 }) {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileMenuPath, setMobileMenuPath] = useState<string | null>(null);
   const settings = useTheme();
-  const pathname = pathnameOverride || usePathname();
+  const currentPathname = usePathname();
+  const pathname = pathnameOverride || currentPathname;
   const { scrollY } = useScroll();
+  const mobileMenuOpen = mobileMenuPath === pathname;
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     if (!embedded) {
@@ -27,11 +31,13 @@ export default function Navbar({
   });
 
   const navIsScrolled = embedded ? false : isScrolled;
+  const logoUrl = resolveMediaUrl(settings?.logo_url);
 
   const links = [
     { name: "Home", href: "/", icon: null },
     { name: "Courses", href: "/courses", icon: BookOpen },
     { name: "Instructors", href: "/teachers", icon: Users },
+    { name: "Resources", href: "/resources", icon: FileText },
     { name: "About", href: "/about", icon: Info },
     { name: "Contact", href: "/contact", icon: Phone },
   ];
@@ -41,6 +47,7 @@ export default function Navbar({
       <motion.nav
         data-preview-section="site-navbar"
         id="site-navbar"
+        aria-label="Primary"
         initial={embedded ? false : { y: -100 }}
         animate={embedded ? undefined : { y: 0 }}
         transition={embedded ? undefined : { duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
@@ -57,16 +64,22 @@ export default function Navbar({
         >
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group relative z-10">
-            {settings?.logo_url ? (
-               <div className="w-10 h-10 rounded-[14px] bg-white overflow-hidden shadow-sm border border-white/20 group-hover:shadow-md transition-all duration-300">
-                  <img src={settings.logo_url} alt={settings.site_name} className="w-full h-full object-cover" />
+            {logoUrl ? (
+               <div className="relative w-10 h-10 rounded-[14px] bg-white overflow-hidden shadow-sm border border-white/20 group-hover:shadow-md transition-all duration-300">
+                  <Image
+                    src={logoUrl}
+                    alt={settings?.site_name || "Bidhya Kendra"}
+                    fill
+                    sizes="40px"
+                    className="object-cover"
+                  />
                </div>
             ) : (
               <div
                 className="w-10 h-10 rounded-[14px] flex items-center justify-center text-white font-bold text-xl shadow-md border border-white/20 group-hover:scale-105 group-hover:-rotate-3 transition-all duration-300"
                 style={{ background: `linear-gradient(135deg, var(--color-primary, #2563eb), var(--color-accent, #4f46e5))` }}
               >
-                {settings?.site_name?.charAt(0) || "T"}
+                {settings?.site_name?.charAt(0) || "B"}
               </div>
             )}
             <span
@@ -76,7 +89,7 @@ export default function Navbar({
                 fontFamily: "var(--font-serif, 'Playfair Display'), serif"
               }}
             >
-              {settings?.site_name || "TuitionHub"}
+              {settings?.site_name || "Bidhya Kendra"}
             </span>
           </Link>
 
@@ -88,6 +101,7 @@ export default function Navbar({
                 <Link
                   key={link.name}
                   href={link.href}
+                  aria-current={active ? "page" : undefined}
                   className="relative px-5 py-2 text-sm font-semibold transition-all duration-300 rounded-full group overflow-hidden"
                   style={{
                     color: active
@@ -127,7 +141,10 @@ export default function Navbar({
 
           {/* Mobile Toggle */}
           <button
-            onClick={() => setMobileMenuOpen(true)}
+            onClick={() => setMobileMenuPath(pathname)}
+            aria-label="Open navigation menu"
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-navigation-menu"
             className="md:hidden relative z-10 p-2.5 rounded-xl border transition-colors"
             style={{ 
               color: navIsScrolled ? "var(--color-primary, #000)" : "#fff", 
@@ -150,13 +167,18 @@ export default function Navbar({
           <div className="absolute inset-0 bg-gradient-to-b from-white/80 to-white/40 pointer-events-none" />
           
           <button
-            onClick={() => setMobileMenuOpen(false)}
+            onClick={() => setMobileMenuPath(null)}
+            aria-label="Close navigation menu"
             className="absolute top-8 right-6 p-4 text-gray-500 hover:text-gray-900 bg-white shadow-xl hover:shadow-2xl rounded-full transition-all border border-gray-100 z-10"
           >
             <X className="w-6 h-6" />
           </button>
 
-          <nav className="flex flex-col gap-4 text-2xl font-black tracking-tight relative z-10">
+          <nav
+            id="mobile-navigation-menu"
+            aria-label="Mobile"
+            className="flex flex-col gap-4 text-2xl font-black tracking-tight relative z-10"
+          >
             {links.map((link, i) => (
               <motion.div
                 key={link.name}
@@ -166,7 +188,8 @@ export default function Navbar({
               >
                 <Link
                   href={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={() => setMobileMenuPath(null)}
+                  aria-current={pathname === link.href ? "page" : undefined}
                   className="flex items-center gap-4 bg-white/50 p-5 rounded-[24px] border border-white"
                   style={{ color: pathname === link.href ? "var(--color-primary)" : "#64748b" }}
                 >
@@ -185,7 +208,7 @@ export default function Navbar({
           >
             <Link
               href="/contact"
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={() => setMobileMenuPath(null)}
               className="block w-full py-5 text-center rounded-[24px] text-white font-bold text-lg shadow-xl"
               style={{ background: "var(--color-primary, #2563eb)" }}
             >

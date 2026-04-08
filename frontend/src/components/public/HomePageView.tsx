@@ -16,26 +16,20 @@ import {
   type MotionValue,
 } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   ArrowUpRight,
   BellRing,
-  BookOpen,
-  BriefcaseBusiness,
   ChevronRight,
-  Clock3,
   Command,
   GraduationCap,
   Headphones,
-  MapPin,
-  PhoneCall,
   Quote,
   Search,
-  ShieldCheck,
   Sparkles,
   Star,
-  Users,
   X,
 } from "lucide-react";
 import {
@@ -131,12 +125,6 @@ export default function HomePageView({
   const searchRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  useEffect(() => {
-    if (activeBanner >= banners.length) {
-      setActiveBanner(0);
-    }
-  }, [activeBanner, banners.length]);
-
   const allProgramsLabel = homePage.course_explorer.all_programs_label;
 
   useEffect(() => {
@@ -191,8 +179,8 @@ export default function HomePageView({
 
   if (!settings) return null;
 
-  const currentBanner =
-    banners.length > 0 && activeBanner < banners.length ? banners[activeBanner] : null;
+  const safeActiveBanner = banners.length > 0 ? activeBanner % banners.length : 0;
+  const currentBanner = banners.length > 0 ? banners[safeActiveBanner] : null;
   const primaryPhone = settings.contact_info?.phone?.[0] || settings.contact_info?.email || "";
   const averageRating = testimonials.length
     ? (
@@ -213,15 +201,12 @@ export default function HomePageView({
       ),
     ),
   ].slice(0, 7);
-
-  useEffect(() => {
-    if (!categoryOptions.includes(activeCategory)) {
-      setActiveCategory(allProgramsLabel);
-    }
-  }, [activeCategory, allProgramsLabel, categoryOptions]);
+  const safeActiveCategory = categoryOptions.includes(activeCategory)
+    ? activeCategory
+    : allProgramsLabel;
 
   const normalizedCategory =
-    activeCategory === allProgramsLabel ? null : activeCategory.toLowerCase();
+    safeActiveCategory === allProgramsLabel ? null : safeActiveCategory.toLowerCase();
   const normalizedSearch = deferredSearchQuery.trim().toLowerCase();
 
   const filteredCourses = courses.filter((course) => {
@@ -358,7 +343,7 @@ export default function HomePageView({
         homePage={homePage}
         currentBanner={currentBanner}
         banners={banners}
-        activeBanner={activeBanner}
+        activeBanner={safeActiveBanner}
         onBannerSelect={setActiveBanner}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -416,7 +401,7 @@ export default function HomePageView({
           secondaryCourses={secondaryCourses}
           filteredCoursesCount={filteredCourses.length}
           searchQuery={searchQuery}
-          activeCategory={activeCategory}
+          activeCategory={safeActiveCategory}
           categoryOptions={categoryOptions}
           onCategorySelect={(category) => {
             startTransition(() => {
@@ -431,7 +416,6 @@ export default function HomePageView({
       {homePage.visibility.faculty_showcase ? (
         <HomeFacultyShowcaseSection
           teachers={teachers}
-          settings={settings}
           facultyShowcase={homePage.faculty_showcase}
           rating={averageRating}
           interactive={interactive}
@@ -1195,13 +1179,15 @@ function HomeHeroCommandSection({
                       return (
                         <div
                           key={teacher.id}
-                          className="h-11 w-11 overflow-hidden rounded-full border-2 border-[#0b1220] bg-slate-700"
+                          className="relative h-11 w-11 overflow-hidden rounded-full border-2 border-[#0b1220] bg-slate-700"
                         >
                           {teacherPhoto ? (
-                            <img
+                            <Image
                               src={teacherPhoto}
-                              alt={teacher.name}
-                              className="h-full w-full object-cover"
+                              alt={`${teacher.name} teacher profile`}
+                              fill
+                              sizes="44px"
+                              className="object-cover"
                             />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center text-sm font-bold text-white">
@@ -1690,14 +1676,16 @@ function ProgramFeatureCard({
           </div>
         </div>
 
-        <div className="relative overflow-hidden rounded-[28px] bg-slate-100">
-          {courseImage ? (
-            <img
-              src={courseImage}
-              alt={course.title}
-              className="h-full min-h-[18rem] w-full object-cover transition-transform duration-700 group-hover:scale-105"
-            />
-          ) : (
+      <div className="relative min-h-[18rem] overflow-hidden rounded-[28px] bg-slate-100">
+        {courseImage ? (
+          <Image
+            src={courseImage}
+            alt={`${course.title} course image`}
+            fill
+            sizes="(min-width: 1024px) 40vw, 100vw"
+            className="object-cover transition-transform duration-700 group-hover:scale-105"
+          />
+        ) : (
             <div
               className="h-full min-h-[18rem] w-full"
               style={{
@@ -1727,12 +1715,14 @@ function ProgramCard({
       href={`/courses/${course.slug}`}
       className="group block h-full overflow-hidden rounded-[30px] border border-slate-200 bg-white p-4 shadow-[0_24px_70px_-54px_rgba(15,23,42,0.35)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_30px_80px_-50px_rgba(15,23,42,0.4)]"
     >
-      <div className="overflow-hidden rounded-[24px] bg-slate-100">
+      <div className="relative h-48 overflow-hidden rounded-[24px] bg-slate-100">
         {courseImage ? (
-          <img
+          <Image
             src={courseImage}
-            alt={course.title}
-            className="h-48 w-full object-cover transition-transform duration-700 group-hover:scale-105"
+            alt={`${course.title} course image`}
+            fill
+            sizes="(min-width: 768px) 33vw, 100vw"
+            className="object-cover transition-transform duration-700 group-hover:scale-105"
           />
         ) : (
           <div
@@ -1776,13 +1766,11 @@ function ProgramCard({
 
 function HomeFacultyShowcaseSection({
   teachers,
-  settings,
   facultyShowcase,
   rating,
   interactive,
 }: {
   teachers: Teacher[];
-  settings: SiteSettings;
   facultyShowcase: ReturnType<typeof normalizeHomePage>["faculty_showcase"];
   rating: string;
   interactive: boolean;
@@ -2041,14 +2029,24 @@ function HomeFacultyCard({
       }}
     >
       <div className={`grid gap-5 ${isFeatured ? "lg:grid-cols-[0.9fr_1.1fr] lg:items-stretch" : ""}`}>
-        <div className="overflow-hidden rounded-[24px] bg-slate-100">
+        <div
+          className={`relative overflow-hidden rounded-[24px] bg-slate-100 ${
+            isFeatured ? "min-h-[24rem]" : isCompact ? "h-56" : "h-72"
+          }`}
+        >
           {teacherPhoto ? (
-            <img
+            <Image
               src={teacherPhoto}
-              alt={teacher.name}
-              className={`w-full object-cover transition-transform duration-700 group-hover:scale-105 ${
-                isFeatured ? "h-full min-h-[24rem]" : isCompact ? "h-56" : "h-72"
-              }`}
+              alt={`${teacher.name} teacher profile`}
+              fill
+              sizes={
+                isFeatured
+                  ? "(min-width: 1024px) 32vw, 100vw"
+                  : isCompact
+                    ? "(min-width: 768px) 33vw, 100vw"
+                    : "(min-width: 1024px) 25vw, 100vw"
+              }
+              className="object-cover transition-transform duration-700 group-hover:scale-105"
             />
           ) : (
             <div

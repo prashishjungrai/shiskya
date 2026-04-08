@@ -4,11 +4,11 @@ import type { CSSProperties } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight, Quote, Sparkles } from "lucide-react";
+import Breadcrumbs, { type BreadcrumbItem } from "@/components/seo/Breadcrumbs";
 import { ABOUT_ICON_MAP, getTextStyle, normalizeAboutPage } from "@/lib/about-page";
 import type {
   AboutBadgeStyle,
   AboutButtonStyle,
-  AboutPageSettings,
   AboutStatementSettings,
   SiteSettings,
 } from "@/lib/types";
@@ -29,6 +29,7 @@ const itemVariants = {
 
 type AboutPageViewProps = {
   settings: SiteSettings | null;
+  breadcrumbs?: BreadcrumbItem[];
   interactive?: boolean;
 };
 
@@ -112,6 +113,7 @@ function StatementCard({
 
 export default function AboutPageView({
   settings,
+  breadcrumbs = [],
   interactive = true,
 }: AboutPageViewProps) {
   const { scrollY } = useScroll();
@@ -153,6 +155,9 @@ export default function AboutPageView({
           <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)] bg-[size:88px_88px] opacity-10" />
 
           <div className="relative z-10 mx-auto max-w-7xl">
+            {breadcrumbs.length > 0 ? (
+              <Breadcrumbs items={breadcrumbs} variant="light" className="mb-6" />
+            ) : null}
             <motion.div
               initial={interactive ? { opacity: 0, y: 22 } : false}
               animate={{ opacity: 1, y: 0 }}

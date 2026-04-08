@@ -26,6 +26,12 @@ export default function PublicSiteChrome({
         fontFamily: "var(--font-sans, Inter), sans-serif",
       }}
     >
+      <a
+        href="#main-content"
+        className="sr-only z-50 rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white focus:not-sr-only focus:absolute focus:left-4 focus:top-4"
+      >
+        Skip to main content
+      </a>
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden opacity-40 mix-blend-multiply">
         <div
           className={`${showAnimatedBackdrop ? "animate-blob" : ""} absolute -left-[10%] -top-[20%] h-[50%] w-[50%] rounded-full opacity-60 blur-[120px] mix-blend-multiply`}
@@ -42,7 +48,9 @@ export default function PublicSiteChrome({
       </div>
 
       <Navbar pathnameOverride={pathnameOverride} embedded={embedded} />
-      <main className="relative z-10 flex w-full flex-1 flex-col">{children}</main>
+      <main id="main-content" className="relative z-10 flex w-full flex-1 flex-col">
+        {children}
+      </main>
       <Footer />
 
       {showAnimatedBackdrop ? (
@@ -72,6 +80,12 @@ export default function PublicSiteChrome({
 
           .animation-delay-4000 {
             animation-delay: 4s;
+          }
+
+          @media (prefers-reduced-motion: reduce) {
+            .animate-blob {
+              animation: none;
+            }
           }
         `}</style>
       ) : null}
