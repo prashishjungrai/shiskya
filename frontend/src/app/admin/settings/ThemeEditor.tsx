@@ -204,7 +204,7 @@ export default function ThemeEditor({
           </div>
         </div>
         <p className="text-[10px] font-bold italic text-primary/20">
-          "Design is the silent ambassador of your institution."
+          &ldquo;Design is the silent ambassador of your institution.&rdquo;
         </p>
       </div>
     </div>

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Lock, ShieldCheck, ArrowRight, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import type { AxiosError } from "axios";
 import api from "@/lib/api";
 
 export default function AdminLogin() {
@@ -21,8 +22,11 @@ export default function AdminLogin() {
     try {
       await api.post("/auth/login", { username, password });
       router.push("/admin");
-    } catch (err: any) {
-      setError(err.response?.data?.detail || "Institutional credentials invalid.");
+    } catch (error: unknown) {
+      const message =
+        (error as AxiosError<{ detail?: string }>)?.response?.data?.detail ||
+        "Institutional credentials invalid.";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -106,7 +110,7 @@ export default function AdminLogin() {
            <Link href="/" className="flex items-center gap-2 text-[10px] font-bold uppercase text-white/25 transition-colors hover:text-white/70">
              <Globe className="w-3 h-3"/> Public Terminal
            </Link>
-           <span className="text-[10px] uppercase font-bold text-white/10 tracking-[0.2em]">&copy; 2026 The Elite Academy</span>
+           <span className="text-[10px] uppercase font-bold text-white/10 tracking-[0.2em]">&copy; 2026 Bidhya Kendra</span>
         </div>
       </motion.div>
     </div>

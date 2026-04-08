@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
 import { Upload, X, Loader2, Image as ImageIcon } from "lucide-react";
+import type { AxiosError } from "axios";
 import api from "@/lib/api";
 import { resolveMediaUrl } from "@/lib/media";
 import { usePreviewSync } from "@/components/admin/PreviewSyncContext";
@@ -61,9 +62,12 @@ export default function ImageUpload({
       } else {
         throw new Error("Invalid response from server");
       }
-    } catch (err: any) {
-      console.error("Upload error:", err);
-      setError(err.response?.data?.detail || "Failed to upload image. Please try again.");
+    } catch (error: unknown) {
+      console.error("Upload error:", error);
+      const message =
+        (error as AxiosError<{ detail?: string }>)?.response?.data?.detail ||
+        "Failed to upload image. Please try again.";
+      setError(message);
     } finally {
       setIsUploading(false);
       // Reset input

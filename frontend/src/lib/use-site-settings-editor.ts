@@ -23,7 +23,7 @@ function cloneSettings(settings: SiteSettings) {
 
 function comparableSettings(settings: SiteSettings | null) {
   if (!settings) return null;
-  const { id, updated_at, ...rest } = settings;
+  const { ...rest } = settings;
   return rest;
 }
 
